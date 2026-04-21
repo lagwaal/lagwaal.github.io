@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShoppingBag, Heart, Star, ArrowLeft, Check } from 'lucide-react';
+import { ShoppingBag, Heart, Star, ArrowLeft, Check, ZoomIn, ZoomOut, Move } from 'lucide-react';
 import { useProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { formatPrice, trackEvent } from '../utils/storage';
@@ -17,6 +17,12 @@ export default function ProductDetail() {
   const [mainImage, setMainImage] = useState('');
   const [added, setAdded] = useState(false);
 
+  // Zoom & Pan state
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [panPos, setPanPos] = useState({ x: 50, y: 50 });
+  const [isDragging, setIsDragging] = useState(false);
+  const imgContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (product) {
       setSelectedSize(product.sizes[0] || '');
@@ -26,6 +32,51 @@ export default function ProductDetail() {
     }
     window.scrollTo(0, 0);
   }, [product]);
+
+  // Reset zoom when image changes
+  useEffect(() => {
+    setIsZoomed(false);
+    setPanPos({ x: 50, y: 50 });
+  }, [mainImage]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!isZoomed) {
+      // Click to zoom in
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      setPanPos({ x, y });
+      setIsZoomed(true);
+    } else {
+      // Start dragging in zoomed mode
+      setIsDragging(true);
+    }
+  }, [isZoomed]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isZoomed || !isDragging) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setPanPos({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
+  }, [isZoomed, isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const toggleZoom = useCallback(() => {
+    if (isZoomed) {
+      setIsZoomed(false);
+      setPanPos({ x: 50, y: 50 });
+    } else {
+      setIsZoomed(true);
+    }
+  }, [isZoomed]);
 
   if (!product) {
     return (
@@ -55,20 +106,48 @@ export default function ProductDetail() {
         <div className="product-detail">
           <div className="product-detail-gallery">
             <div 
-              className="product-detail-img"
-              onMouseMove={(e) => {
-                const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-                const x = ((e.pageX - left - window.scrollX) / width) * 100;
-                const y = ((e.pageY - top - window.scrollY) / height) * 100;
-                const img = e.currentTarget.querySelector('img');
-                if (img) img.style.transformOrigin = `${x}% ${y}%`;
-              }}
-              onMouseLeave={(e) => {
-                const img = e.currentTarget.querySelector('img');
-                if (img) img.style.transformOrigin = 'center';
-              }}
+              ref={imgContainerRef}
+              className={`product-detail-img ${isZoomed ? 'zoomed' : ''}`}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              style={{ cursor: isZoomed ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in' }}
             >
-              {mainImage ? <img src={mainImage} alt={product.name} /> : <span>🧤</span>}
+              {mainImage ? (
+                <img 
+                  src={mainImage} 
+                  alt={product.name} 
+                  draggable={false}
+                  style={{ 
+                    transformOrigin: `${panPos.x}% ${panPos.y}%`,
+                  }}
+                />
+              ) : <span>🧤</span>}
+              {/* Zoom indicator */}
+              <button 
+                onClick={(e) => { e.stopPropagation(); toggleZoom(); }}
+                style={{
+                  position: 'absolute', bottom: 12, right: 12, 
+                  background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 8, padding: '8px 12px', color: '#fff',
+                  display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem',
+                  cursor: 'pointer', backdropFilter: 'blur(8px)', zIndex: 2,
+                }}
+              >
+                {isZoomed ? <><ZoomOut size={14} /> Zoom Out</> : <><ZoomIn size={14} /> Click to Zoom</>}
+              </button>
+              {isZoomed && (
+                <div style={{
+                  position: 'absolute', top: 12, left: 12,
+                  background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 8, padding: '6px 10px', color: 'rgba(255,255,255,0.7)',
+                  fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: 4,
+                  backdropFilter: 'blur(8px)', zIndex: 2,
+                }}>
+                  <Move size={12} /> Drag to pan
+                </div>
+              )}
             </div>
             {product.images.length > 1 && (
               <div className="product-thumbnails">
