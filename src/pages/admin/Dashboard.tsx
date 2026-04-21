@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DollarSign, ShoppingCart, Package, TrendingUp, CheckCircle } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { getOrders } from '../../utils/storage';
@@ -9,9 +9,18 @@ const COLORS = ['#d4a853', '#e6bc6a', '#b8942e', '#f0d78c', '#967321', '#c4a24a'
 
 export default function Dashboard() {
   const { products } = useProducts();
-  const orders = getOrders();
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
+  useEffect(() => {
+    getOrders().then(data => {
+      setOrders(data);
+      setLoadingOrders(false);
+    });
+  }, []);
 
   const stats = useMemo(() => {
+    if (loadingOrders) return null;
     const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
     const avgOrder = orders.length > 0 ? totalRevenue / orders.length : 0;
 
@@ -44,6 +53,10 @@ export default function Dashboard() {
 
     return { totalRevenue, totalOrders: orders.length, totalProducts: products.length, avgOrder, revenueByDay, ordersChartData, topProducts, lowStockProducts };
   }, [orders, products]);
+
+  if (!stats) {
+    return <div className="admin-content"><p>Loading dashboard data...</p></div>;
+  }
 
   return (
     <div>

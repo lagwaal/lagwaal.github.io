@@ -54,7 +54,20 @@ export default function ProductDetail() {
         </Link>
         <div className="product-detail">
           <div className="product-detail-gallery">
-            <div className="product-detail-img">
+            <div 
+              className="product-detail-img"
+              onMouseMove={(e) => {
+                const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+                const x = ((e.pageX - left - window.scrollX) / width) * 100;
+                const y = ((e.pageY - top - window.scrollY) / height) * 100;
+                const img = e.currentTarget.querySelector('img');
+                if (img) img.style.transformOrigin = `${x}% ${y}%`;
+              }}
+              onMouseLeave={(e) => {
+                const img = e.currentTarget.querySelector('img');
+                if (img) img.style.transformOrigin = 'center';
+              }}
+            >
               {mainImage ? <img src={mainImage} alt={product.name} /> : <span>🧤</span>}
             </div>
             {product.images.length > 1 && (

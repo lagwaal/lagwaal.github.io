@@ -21,29 +21,34 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadProducts = useCallback(() => {
+  const loadProducts = useCallback(async () => {
     setLoading(true);
-    const data = getProducts();
-    setProducts(data);
-    setLoading(false);
+    try {
+      const data = await getProducts();
+      setProducts(data);
+    } catch (e) {
+      console.error('Failed to load products:', e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
 
-  const addProduct = (product: Product) => {
-    addProductStorage(product);
+  const addProduct = async (product: Product) => {
+    await addProductStorage(product);
     setProducts((prev) => [...prev, product]);
   };
 
-  const updateProduct = (product: Product) => {
-    updateProductStorage(product);
+  const updateProduct = async (product: Product) => {
+    await updateProductStorage(product);
     setProducts((prev) => prev.map((p) => (p.id === product.id ? product : p)));
   };
 
-  const deleteProduct = (id: string) => {
-    deleteProductStorage(id);
+  const deleteProduct = async (id: string) => {
+    await deleteProductStorage(id);
     setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 

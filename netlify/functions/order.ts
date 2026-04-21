@@ -1,54 +1,67 @@
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 
-const handler: Handler = async (event, context) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+const handler: Handler = async (event) => {
+  if (event.httpMethod === 'POST') {
+    const store = getStore('lagwal_store');
+    const order = JSON.parse(event.body || '{}');
+    const webhookUrl = process.env.WHATSAPP_WEBHOOK_URL;
+
+    console.log('Processing Order via Netlify Database:', order.id);
+
+    try {
+      // 1. Save to Netlify Database (Blobs)
+      const existingOrders: any[] = await store.get('orders', { type: 'json' }) || [];
+      existingOrders.unshift(order);
+      await store.setJSON('orders', existingOrders);
+
+      // 2. Update Inventory (Decrement Stock)
+      const products: any[] = await store.get('products', { type: 'json' }) || [];
+      order.items.forEach((item: any) => {
+        const pIdx = products.findIndex(p => p.id === item.product.id);
+        if (pIdx !== -1) {
+          products[pIdx].stock = Math.max(0, products[pIdx].stock - item.quantity);
+        }
+      });
+      await store.setJSON('products', products);
+
+      // 3. Notify WhatsApp Bot (if configured)
+      if (webhookUrl) {
+        await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(order),
+        });
+      }
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ 
+          success: true, 
+          message: 'Order saved to database and processed.',
+          orderId: order.id 
+        }),
+      };
+    } catch (error) {
+      console.error('Database Error:', error);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ success: false, error: 'Failed to save to database' }),
+      };
+    }
   }
 
-  const order = JSON.parse(event.body || '{}');
-  const webhookUrl = process.env.WHATSAPP_WEBHOOK_URL;
-
-  console.log('New Order Received via Netlify:', order.orderId);
-
-  if (!webhookUrl) {
+  // Handle GET - Fetch all orders (for Admin Dashboard)
+  if (event.httpMethod === 'GET') {
+    const store = getStore('lagwal_store');
+    const orders = await store.get('orders', { type: 'json' }) || [];
     return {
       statusCode: 200,
-      body: JSON.stringify({ 
-        success: true, 
-        message: 'Order received but WhatsApp notification not sent (missing webhook configuration).',
-        orderId: order.orderId
-      }),
+      body: JSON.stringify(orders),
     };
   }
 
-  try {
-    const botResponse = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order),
-    });
-
-    if (!botResponse.ok) throw new Error(`Bot API responded with ${botResponse.status}`);
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ 
-        success: true, 
-        message: 'Order processed and WhatsApp notification sent.',
-        orderId: order.orderId
-      }),
-    };
-  } catch (error) {
-    console.error('Error forwarding to WhatsApp bot:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ 
-        success: false, 
-        message: 'Order received but failed to notify WhatsApp bot.',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }),
-    };
-  }
+  return { statusCode: 405, body: 'Method Not Allowed' };
 };
 
 export { handler };

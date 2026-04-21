@@ -34,87 +34,105 @@ function setItem<T>(key: string, value: T): void {
 }
 
 // Products
-export function getProducts(): Product[] {
-  const products = getItem<Product[]>(KEYS.PRODUCTS, []);
-  
-  // Migration: Sync if counts don't match or if images are outdated
-  const needsSync = products.length !== seedProducts.length || 
-                    products.some(p => {
-                      const seedP = seedProducts.find(s => s.id === p.id);
-                      return seedP && (!Array.isArray(p.images) || p.images.length !== seedP.images.length);
-                    });
-  
-  if (needsSync) {
-    const syncedProducts = seedProducts.map(seedP => {
-      const existing = products.find(p => p.id === seedP.id);
-      if (existing) {
-        // Keep existing stock but sync everything else (new images, description, price, etc.)
-        return { ...seedP, stock: existing.stock };
-      }
-      return seedP;
-    });
-    setItem(KEYS.PRODUCTS, syncedProducts);
-    return syncedProducts;
+export async function getProducts(): Promise<Product[]> {
+  try {
+    const response = await fetch('/api/products');
+    if (response.ok) {
+      const products = await response.json();
+      // Sync local cache
+      setItem(KEYS.PRODUCTS, products);
+      return products;
+    }
+  } catch (e) {
+    console.warn('Failed to fetch products from API, using cache');
   }
   
-  return products;
+  const cached = getItem<Product[]>(KEYS.PRODUCTS, []);
+  if (cached.length === 0) {
+    setItem(KEYS.PRODUCTS, seedProducts);
+    return seedProducts;
+  }
+  return cached;
 }
 
-export function saveProducts(products: Product[]): void {
+export async function saveProducts(products: Product[]): Promise<void> {
   setItem(KEYS.PRODUCTS, products);
+  try {
+    await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(products),
+    });
+  } catch (e) {
+    console.error('Failed to sync products to database');
+  }
 }
 
-export function addProduct(product: Product): void {
-  const products = getProducts();
+export async function addProduct(product: Product): Promise<void> {
+  const products = await getProducts();
   products.push(product);
-  saveProducts(products);
+  await saveProducts(products);
 }
 
-export function updateProduct(updated: Product): void {
-  const products = getProducts().map((p) =>
+export async function updateProduct(updated: Product): Promise<void> {
+  const products = (await getProducts()).map((p) =>
     p.id === updated.id ? updated : p
   );
-  saveProducts(products);
+  await saveProducts(products);
 }
 
-export function deleteProduct(id: string): void {
-  const products = getProducts().filter((p) => p.id !== id);
-  saveProducts(products);
+export async function deleteProduct(id: string): Promise<void> {
+  const products = (await getProducts()).filter((p) => p.id !== id);
+  await saveProducts(products);
 }
 
 // Orders
-export function getOrders(): Order[] {
+export async function getOrders(): Promise<Order[]> {
+  try {
+    const response = await fetch('/api/order');
+    if (response.ok) {
+      const orders = await response.json();
+      setItem(KEYS.ORDERS, orders);
+      return orders;
+    }
+  } catch (e) {
+    console.warn('Failed to fetch orders from API');
+  }
   return getItem<Order[]>(KEYS.ORDERS, []);
 }
 
-export function saveOrders(orders: Order[]): void {
+export async function saveOrders(orders: Order[]): Promise<void> {
   setItem(KEYS.ORDERS, orders);
 }
 
 export function addOrder(order: Order): void {
-  const orders = getOrders();
+  // Note: Checkout.tsx handles the actual API call via sendToWhatsAppBot
+  // which now also saves to the database on the server side.
+  // We just update the local cache here.
+  const orders = getItem<Order[]>(KEYS.ORDERS, []);
   orders.unshift(order);
-  saveOrders(orders);
-
-  // Update Inventory (Stock)
-  const products = getProducts();
-  order.items.forEach(item => {
-    const productIndex = products.findIndex(p => p.id === item.product.id);
-    if (productIndex !== -1) {
-      products[productIndex].stock = Math.max(0, products[productIndex].stock - item.quantity);
-    }
-  });
-  saveProducts(products);
+  setItem(KEYS.ORDERS, orders);
 }
 
-export function updateOrderStatus(
+export async function updateOrderStatus(
   orderId: string,
   status: Order['status']
-): void {
-  const orders = getOrders().map((o) =>
+): Promise<void> {
+  const orders = (await getOrders()).map((o) =>
     o.id === orderId ? { ...o, status, updatedAt: new Date().toISOString() } : o
   );
-  saveOrders(orders);
+  // We need a way to save orders back. 
+  // Let's add a generic saveOrders API if needed, or handle it via a specific status update route.
+  // For now, we'll just update the whole list.
+  try {
+    await fetch('/api/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orders), // In a real DB this would be a PATCH, but Blobs are simpler
+    });
+  } catch (e) {
+    console.error('Failed to update order status in database');
+  }
 }
 
 // Analytics

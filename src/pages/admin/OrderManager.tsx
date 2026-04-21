@@ -9,11 +9,14 @@ export default function OrderManager() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  useEffect(() => { setOrders(getOrders()); }, []);
+  useEffect(() => { 
+    getOrders().then(setOrders); 
+  }, []);
 
-  const handleStatusChange = (orderId: string, status: Order['status']) => {
-    updateOrderStatus(orderId, status);
-    setOrders(getOrders());
+  const handleStatusChange = async (orderId: string, status: Order['status']) => {
+    await updateOrderStatus(orderId, status);
+    const updatedOrders = await getOrders();
+    setOrders(updatedOrders);
     if (selectedOrder?.id === orderId) setSelectedOrder({ ...selectedOrder, status });
   };
 
