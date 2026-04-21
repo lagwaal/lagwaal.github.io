@@ -1,5 +1,6 @@
 import { Product, Order, AnalyticsEvent, StoreSettings } from '../types';
 import { seedProducts } from '../data/seedProducts';
+import { apiUrl } from './apiConfig';
 
 const KEYS = {
   PRODUCTS: 'lagwal_products',
@@ -36,7 +37,7 @@ function setItem<T>(key: string, value: T): void {
 // Products
 export async function getProducts(): Promise<Product[]> {
   try {
-    const response = await fetch('/api/products');
+    const response = await fetch(apiUrl('/api/products'));
     if (response.ok) {
       const products = await response.json();
       // Sync local cache
@@ -58,7 +59,7 @@ export async function getProducts(): Promise<Product[]> {
 export async function saveProducts(products: Product[]): Promise<void> {
   setItem(KEYS.PRODUCTS, products);
   try {
-    await fetch('/api/products', {
+    await fetch(apiUrl('/api/products'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(products),
@@ -89,7 +90,7 @@ export async function deleteProduct(id: string): Promise<void> {
 // Orders
 export async function getOrders(): Promise<Order[]> {
   try {
-    const response = await fetch('/api/order');
+    const response = await fetch(apiUrl('/api/order'));
     if (response.ok) {
       const orders = await response.json();
       setItem(KEYS.ORDERS, orders);
@@ -125,7 +126,7 @@ export async function updateOrderStatus(
   // Let's add a generic saveOrders API if needed, or handle it via a specific status update route.
   // For now, we'll just update the whole list.
   try {
-    await fetch('/api/order', {
+    await fetch(apiUrl('/api/order'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orders), // In a real DB this would be a PATCH, but Blobs are simpler

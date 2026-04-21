@@ -1,5 +1,6 @@
 import { Order } from '../types';
 import { getSettings } from './storage';
+import { apiUrl } from './apiConfig';
 
 export async function sendToWhatsAppBot(order: Order): Promise<{ success: boolean; message: string }> {
   const settings = getSettings();
@@ -21,7 +22,7 @@ export async function sendToWhatsAppBot(order: Order): Promise<{ success: boolea
 
   try {
     // Try calling our internal Vercel API first
-    const apiResponse = await fetch('/api/order', {
+    const apiResponse = await fetch(apiUrl('/api/order'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

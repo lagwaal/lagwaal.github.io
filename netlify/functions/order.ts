@@ -1,7 +1,18 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+};
+
 const handler: Handler = async (event) => {
+  // Handle CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers: CORS_HEADERS, body: '' };
+  }
+
   if (event.httpMethod === 'POST') {
     const store = getStore('lagwal_store');
     const order = JSON.parse(event.body || '{}');
@@ -18,7 +29,7 @@ const handler: Handler = async (event) => {
       // 2. Update Inventory (Decrement Stock)
       const products: any[] = await store.get('products', { type: 'json' }) || [];
       order.items.forEach((item: any) => {
-        const pIdx = products.findIndex(p => p.id === item.product.id);
+        const pIdx = products.findIndex((p: any) => p.id === item.product.id);
         if (pIdx !== -1) {
           products[pIdx].stock = Math.max(0, products[pIdx].stock - item.quantity);
         }
@@ -36,6 +47,7 @@ const handler: Handler = async (event) => {
 
       return {
         statusCode: 200,
+        headers: CORS_HEADERS,
         body: JSON.stringify({ 
           success: true, 
           message: 'Order saved to database and processed.',
@@ -46,6 +58,7 @@ const handler: Handler = async (event) => {
       console.error('Database Error:', error);
       return {
         statusCode: 500,
+        headers: CORS_HEADERS,
         body: JSON.stringify({ success: false, error: 'Failed to save to database' }),
       };
     }
@@ -57,11 +70,12 @@ const handler: Handler = async (event) => {
     const orders = await store.get('orders', { type: 'json' }) || [];
     return {
       statusCode: 200,
+      headers: CORS_HEADERS,
       body: JSON.stringify(orders),
     };
   }
 
-  return { statusCode: 405, body: 'Method Not Allowed' };
+  return { statusCode: 405, headers: CORS_HEADERS, body: 'Method Not Allowed' };
 };
 
 export { handler };
