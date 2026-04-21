@@ -16,9 +16,10 @@ export default function ProductCard({ product }: Props) {
     <Link to={`/products/${product.id}`} className="product-card">
       <div className="product-card-img">
         {product.images[0] ? (
-          <img src={product.images[0]} alt={product.name} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        ) : null}
-        🧤
+          <img src={product.images[0]} alt={product.name} />
+        ) : (
+          <span>🧤</span>
+        )}
         {discount > 0 && <span className="product-card-sale">-{discount}%</span>}
       </div>
       <div className="product-card-body">
