@@ -30,10 +30,13 @@ export async function sendToWhatsAppBot(order: Order): Promise<{ success: boolea
 
     if (apiResponse.ok) {
       const result = await apiResponse.json();
-      return { success: true, message: result.message || 'Order processed via Vercel backend.' };
+      return { success: true, message: result.message || 'Order processed via Netlify backend.' };
+    } else {
+      const errorText = await apiResponse.text();
+      console.error('Backend API error:', apiResponse.status, errorText);
     }
   } catch (e) {
-    console.log('Internal API not available, trying direct webhook fallback...');
+    console.error('Internal API not available or failed:', e);
   }
 
   // Fallback to direct webhook if configured in settings (legacy/local dev support)
