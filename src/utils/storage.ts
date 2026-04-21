@@ -37,14 +37,18 @@ function setItem<T>(key: string, value: T): void {
 export function getProducts(): Product[] {
   const products = getItem<Product[]>(KEYS.PRODUCTS, []);
   
-  // Migration: Ensure images is an array and check if we need to sync with seedProducts
-  const needsSync = products.length === 0 || products.some(p => !Array.isArray(p.images) || p.images.length <= 1);
+  // Migration: Sync if counts don't match or if images are outdated
+  const needsSync = products.length !== seedProducts.length || 
+                    products.some(p => {
+                      const seedP = seedProducts.find(s => s.id === p.id);
+                      return seedP && (!Array.isArray(p.images) || p.images.length !== seedP.images.length);
+                    });
   
   if (needsSync) {
     const syncedProducts = seedProducts.map(seedP => {
       const existing = products.find(p => p.id === seedP.id);
       if (existing) {
-        // Keep existing stock but use new images/description
+        // Keep existing stock but sync everything else (new images, description, price, etc.)
         return { ...seedP, stock: existing.stock };
       }
       return seedP;
