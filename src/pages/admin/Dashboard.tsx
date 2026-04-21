@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { DollarSign, ShoppingCart, Package, TrendingUp } from 'lucide-react';
+import { DollarSign, ShoppingCart, Package, TrendingUp, CheckCircle } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { getOrders } from '../../utils/storage';
 import { useProducts } from '../../context/ProductContext';
@@ -113,7 +113,7 @@ export default function Dashboard() {
           {stats.topProducts.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
-                <Pie data={stats.topProducts} dataKey="sales" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`} labelLine={false} fontSize={11}>
+                <Pie data={stats.topProducts} dataKey="sales" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`} labelLine={false} fontSize={11}>
                   {stats.topProducts.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={{ background: '#1a1a25', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, color: '#f0f0f5' }} />
