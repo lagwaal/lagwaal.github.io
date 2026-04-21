@@ -14,23 +14,26 @@ export function buildWhatsAppMessage(
     )
     .join('\n');
 
-  const message = `🛒 *New Order — ${settings.storeName}*
+  const message = `🛒 *NEW ORDER — ${settings.storeName}*
 ━━━━━━━━━━━━━━━━━━
 
-📦 *Items:*
+📋 *Order Details:*
 ${itemLines}
 
 ━━━━━━━━━━━━━━━━━━
-💰 *Total: ${formatPrice(total)}*
+💰 *Grand Total: ${formatPrice(total)}*
 
-📍 *Ship to:*
-👤 ${customer.name}
-📞 ${customer.phone}
-📧 ${customer.email}
-🏠 ${customer.address}, ${customer.city}
-${customer.notes ? `📝 Notes: ${customer.notes}` : ''}
+👤 *Customer Details:*
+- *Name:* ${customer.name}
+- *Phone:* ${customer.phone}
+- *Email:* ${customer.email}
+- *Address:* ${customer.address}, ${customer.city}
+${customer.notes ? `- *Notes:* ${customer.notes}` : ''}
 
-⏰ ${new Date().toLocaleString()}`;
+📅 *Date:* ${new Date().toLocaleDateString()}
+⏰ *Time:* ${new Date().toLocaleTimeString()}
+
+_Thank you for shopping with ${settings.storeName}!_`;
 
   return message;
 }

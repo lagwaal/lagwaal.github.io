@@ -74,16 +74,16 @@ export default function Settings() {
             </div>
           </div>
           <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
-          <h3 style={{ fontFamily: 'var(--font-heading)' }}>WhatsApp Notifications</h3>
+          <h3 style={{ fontFamily: 'var(--font-heading)' }}>WhatsApp Business Setup</h3>
           <div className="input-group">
-            <label>WhatsApp Number (Manual fallback)</label>
+            <label>Business WhatsApp Number (Manual Order Receiver)</label>
             <input className="input-field" value={form.whatsappNumber} onChange={(e) => update('whatsappNumber', e.target.value)} placeholder="923001234567" />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Backup number for manual WhatsApp opening</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Orders will be sent to this number if you don't have a bot configured.</span>
           </div>
           <div className="input-group">
-            <label>WhatsApp Bot Webhook URL (Automatic)</label>
+            <label>WhatsApp API Webhook (Automated Bot - Optional)</label>
             <input className="input-field" value={form.whatsappWebhookUrl || ''} onChange={(e) => update('whatsappWebhookUrl', e.target.value)} placeholder="https://your-bot-api.com/webhook" />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Orders will be sent automatically to this endpoint</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Leave blank if you prefer receiving orders manually on your WhatsApp.</span>
           </div>
           <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
           <h3 style={{ fontFamily: 'var(--font-heading)' }}>Security</h3>
