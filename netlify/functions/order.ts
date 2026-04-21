@@ -13,14 +13,15 @@ const handler: Handler = async (event) => {
     return { statusCode: 204, headers: CORS_HEADERS, body: '' };
   }
 
-  if (event.httpMethod === 'POST') {
+  try {
     const store = getStore('lagwal_store');
-    const order = JSON.parse(event.body || '{}');
-    const webhookUrl = process.env.WHATSAPP_WEBHOOK_URL;
 
-    console.log('Processing Order via Netlify Database:', order.id);
+    if (event.httpMethod === 'POST') {
+      const order = JSON.parse(event.body || '{}');
+      const webhookUrl = process.env.WHATSAPP_WEBHOOK_URL;
 
-    try {
+      console.log('Processing Order via Netlify Database:', order.id);
+
       // 1. Save to Netlify Database (Blobs)
       const existingOrders: any[] = await store.get('orders', { type: 'json' }) || [];
       existingOrders.unshift(order);
@@ -38,11 +39,15 @@ const handler: Handler = async (event) => {
 
       // 3. Notify WhatsApp Bot (if configured)
       if (webhookUrl) {
-        await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(order),
-        });
+        try {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(order),
+          });
+        } catch (webhookErr) {
+          console.warn('Webhook notification failed but order saved:', webhookErr);
+        }
       }
 
       return {
@@ -54,28 +59,35 @@ const handler: Handler = async (event) => {
           orderId: order.id 
         }),
       };
-    } catch (error) {
-      console.error('Database Error:', error);
+    }
+
+    // Handle GET - Fetch all orders (for Admin Dashboard)
+    if (event.httpMethod === 'GET') {
+      const orders = await store.get('orders', { type: 'json' }) || [];
       return {
-        statusCode: 500,
+        statusCode: 200,
         headers: CORS_HEADERS,
-        body: JSON.stringify({ success: false, error: 'Failed to save to database' }),
+        body: JSON.stringify(orders),
       };
     }
-  }
 
-  // Handle GET - Fetch all orders (for Admin Dashboard)
-  if (event.httpMethod === 'GET') {
-    const store = getStore('lagwal_store');
-    const orders = await store.get('orders', { type: 'json' }) || [];
+    return { statusCode: 405, headers: CORS_HEADERS, body: 'Method Not Allowed' };
+  } catch (error: any) {
+    console.error('Order Function Error:', error);
+    
+    // Check for missing Blobs environment
+    const isBlobsMissing = error.name === 'MissingBlobsEnvironmentError' || error.message?.includes('Blobs');
+
     return {
-      statusCode: 200,
+      statusCode: 500,
       headers: CORS_HEADERS,
-      body: JSON.stringify(orders),
+      body: JSON.stringify({ 
+        success: false, 
+        error: isBlobsMissing ? 'Netlify Blobs not enabled' : 'Internal server error',
+        details: error.message
+      }),
     };
   }
-
-  return { statusCode: 405, headers: CORS_HEADERS, body: 'Method Not Allowed' };
 };
 
 export { handler };
