@@ -7,7 +7,28 @@ export default function Settings() {
   const [form, setForm] = useState<StoreSettings>(getSettings());
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => { setForm(getSettings()); }, []);
+  const [status, setStatus] = useState<{ loading: boolean; connected: boolean; error?: string }>({ loading: true, connected: false });
+
+  useEffect(() => {
+    setForm(getSettings());
+    checkBackend();
+  }, []);
+
+  const checkBackend = async () => {
+    setStatus({ loading: true, connected: false });
+    try {
+      const { apiUrl } = await import('../../utils/apiConfig');
+      const res = await fetch(apiUrl('/api/products'));
+      if (res.ok) {
+        setStatus({ loading: false, connected: true });
+      } else {
+        const err = await res.json();
+        setStatus({ loading: false, connected: false, error: err.error || `Error ${res.status}` });
+      }
+    } catch (e) {
+      setStatus({ loading: false, connected: false, error: 'Cannot reach backend' });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +42,20 @@ export default function Settings() {
   return (
     <div>
       <div className="admin-header"><h1>Settings</h1></div>
+      
+      {/* Backend Status Check */}
+      <div className="card" style={{ maxWidth: 600, marginBottom: 24, borderLeft: `4px solid ${status.connected ? '#22c55e' : '#ef4444'}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h3 style={{ fontFamily: 'var(--font-heading)', margin: 0, fontSize: '1.1rem' }}>Backend Connection</h3>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              {status.loading ? 'Checking connection...' : (status.connected ? '✅ All systems operational' : `❌ ${status.error}`)}
+            </p>
+          </div>
+          <button onClick={checkBackend} className="btn btn-outline btn-sm" disabled={status.loading}>Re-check</button>
+        </div>
+      </div>
+
       <div className="card" style={{ maxWidth: 600 }}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <h3 style={{ fontFamily: 'var(--font-heading)' }}>Store Configuration</h3>
