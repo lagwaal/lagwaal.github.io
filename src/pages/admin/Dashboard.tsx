@@ -44,7 +44,7 @@ export default function Dashboard() {
 
     // Top products
     const productSales: Record<string, number> = {};
-    orders.forEach((o) => o.items.forEach((item) => {
+    orders.forEach((o: any) => o.items.forEach((item: any) => {
       productSales[item.product.name] = (productSales[item.product.name] || 0) + item.quantity;
     }));
     const topProducts = Object.entries(productSales).map(([name, sales]) => ({ name, sales })).sort((a, b) => b.sales - a.sales).slice(0, 6);
