@@ -12,7 +12,6 @@ export const seedProducts: Product[] = [
     stock: 50,
     images: [
       '/products/sport/1.jpg',
-      '/products/sport/2.jpg',
       '/products/sport/1_1.png',
       '/products/sport/1_2.png',
       '/products/sport/1_3.png',
@@ -37,11 +36,8 @@ export const seedProducts: Product[] = [
     colors: ['Red'],
     stock: 35,
     images: [
-      '/products/welding/1.jpg',
+
       '/products/welding/2.jpg',
-      '/products/welding/3.png',
-      '/products/welding/4.png',
-      '/products/welding/5.png',
       '/products/welding/2_1.png',
       '/products/welding/2_2.png',
       '/products/welding/2_3.png',
@@ -63,11 +59,7 @@ export const seedProducts: Product[] = [
     colors: ['White'],
     stock: 40,
     images: [
-      '/products/gauntlet/1.jpg',
-      '/products/gauntlet/2.jpg',
       '/products/gauntlet/3.jpg',
-      '/products/gauntlet/4.png',
-      '/products/gauntlet/5.png',
       '/products/gauntlet/3_1.png',
       '/products/gauntlet/3_2.png',
       '/products/gauntlet/3_3.png',
@@ -90,8 +82,7 @@ export const seedProducts: Product[] = [
     colors: ['Yellow/Black'],
     stock: 25,
     images: [
-      '/products/industrial/1.jpg',
-      '/products/industrial/2.jpg',
+
       '/products/industrial/4.jpg',
       '/products/industrial/4_1.jpg',
       '/products/industrial/4_2.png',
