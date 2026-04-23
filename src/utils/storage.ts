@@ -13,8 +13,8 @@ const KEYS = {
 
 const DEFAULT_SETTINGS: StoreSettings = {
   storeName: 'Lagwal',
-  currency: 'USD',
-  currencySymbol: '$',
+  currency: 'PKR',
+  currencySymbol: 'Rs.',
   whatsappNumber: '923001234567',
   whatsappWebhookUrl: '',
   adminPassword: 'admin123',

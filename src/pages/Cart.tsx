@@ -60,7 +60,7 @@ export default function Cart() {
             <div className="cart-summary-row"><span>Subtotal</span><span>{formatPrice(total)}</span></div>
             <div className="cart-summary-row"><span>Shipping</span><span>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span></div>
             <div className="cart-summary-row total"><span>Total</span><span>{formatPrice(total + shipping)}</span></div>
-            {total < 3000 && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 8 }}>Free shipping on orders above Rs. 3,000</p>}
+            {total < 3000 && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 8 }}>Free shipping on orders above {formatPrice(3000)}</p>}
             <Link to="/checkout" className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: 20 }}>
               Proceed to Checkout <ArrowRight size={18} />
             </Link>

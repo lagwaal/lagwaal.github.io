@@ -3,7 +3,7 @@ import { ArrowRight, Shield, Truck, Award, Star } from 'lucide-react';
 import { useProducts } from '../context/ProductContext';
 import ProductCard from '../components/ProductCard';
 import { useEffect } from 'react';
-import { trackEvent } from '../utils/storage';
+import { trackEvent, formatPrice } from '../utils/storage';
 
 export default function Home() {
   const { getFeaturedProducts, products } = useProducts();
@@ -73,7 +73,7 @@ export default function Home() {
               </div>
               <h3 style={{ marginBottom: 8 }}>Fast Delivery</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                Free nationwide shipping on orders above Rs. 3,000. Delivered within 3-5 business days.
+                Free nationwide shipping on orders above {formatPrice(3000)}. Delivered within 3-5 business days.
               </p>
             </div>
             <div className="card animate-in" style={{ textAlign: 'center', padding: '40px 24px', animationDelay: '0.2s' }}>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { CheckCircle, MessageCircle, Home, ShoppingBag, Info, AlertTriangle } from 'lucide-react';
 import { Order } from '../types';
+import { formatPrice } from '../utils/storage';
 
 export default function Success() {
   const location = useLocation();
@@ -80,12 +81,12 @@ export default function Success() {
                 {order?.items.map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>{item.product.name} <small>({item.selectedSize})</small> × {item.quantity}</span>
-                    <span style={{ fontWeight: 500 }}>Rs. {(item.product.price * item.quantity).toLocaleString()}</span>
+                    <span style={{ fontWeight: 500 }}>{formatPrice(item.product.price * item.quantity)}</span>
                   </div>
                 ))}
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 4, display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '1rem' }}>
                   <span>Total Amount</span>
-                  <span className="text-accent">Rs. {order?.total.toLocaleString()}</span>
+                  <span className="text-accent">{formatPrice(order?.total || 0)}</span>
                 </div>
               </div>
             </div>
